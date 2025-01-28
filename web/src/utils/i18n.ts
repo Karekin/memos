@@ -2,6 +2,7 @@ import { FallbackLngObjList } from "i18next";
 import { useTranslation } from "react-i18next";
 import i18n, { locales, TLocale } from "@/i18n";
 import enTranslation from "@/locales/en.json";
+import en from "../locales/en.json";
 
 export const findNearestMatchedLanguage = (language: string): Locale => {
   if (locales.includes(language as TLocale)) {
@@ -46,3 +47,12 @@ export const useTranslate = (): TypedT => {
   const { t } = useTranslation<Translations>();
   return t;
 };
+
+const resources = {
+  en: {
+    translation: en,
+  },
+  // other languages...
+};
+
+export default resources;

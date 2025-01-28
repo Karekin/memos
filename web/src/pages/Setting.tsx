@@ -17,6 +17,7 @@ import { useWorkspaceSettingStore } from "@/store/v1";
 import { User_Role } from "@/types/proto/api/v1/user_service";
 import { WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { useTranslate } from "@/utils/i18n";
+import AiSettings from "@/components/Settings/AiSettings";
 
 type SettingSection = "my-account" | "preference" | "member" | "system" | "memo-related" | "storage" | "sso";
 
@@ -146,6 +147,7 @@ const Setting = () => {
             ) : state.selectedSection === "sso" ? (
               <SSOSection />
             ) : null}
+            <AiSettings />
           </div>
         </div>
       </div>

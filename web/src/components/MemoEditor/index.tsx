@@ -33,6 +33,8 @@ import RelationListView from "./RelationListView";
 import ResourceListView from "./ResourceListView";
 import { handleEditorKeydownWithMarkdownShortcuts, hyperlinkHighlightedText } from "./handlers";
 import { MemoEditorContext } from "./types";
+import { BotIcon } from "lucide-react";
+import AiModal from "./AiModal"; // Import the AiModal component
 
 export interface Props {
   className?: string;
@@ -90,6 +92,7 @@ const MemoEditor = (props: Props) => {
   const workspaceMemoRelatedSetting =
     workspaceSettingStore.getWorkspaceSettingByKey(WorkspaceSettingKey.MEMO_RELATED)?.memoRelatedSetting ||
     WorkspaceMemoRelatedSetting.fromPartial({});
+  const [isAiModalOpen, setAiModalOpen] = useState(false);
 
   useEffect(() => {
     editorRef.current?.setContent(contentCache || "");
@@ -413,6 +416,20 @@ const MemoEditor = (props: Props) => {
 
   const allowSave = (hasContent || state.resourceList.length > 0) && !state.isUploadingResource && !state.isRequesting;
 
+  const handleAskAiClick = () => {
+    // Logic to open a modal or prompt for AI interaction
+    openAiModal();
+  };
+
+  const openAiModal = () => setAiModalOpen(true);
+  const closeAiModal = () => setAiModalOpen(false);
+
+  const handleAiSubmit = (input: string) => {
+    // Logic to process AI input and update the editor content
+    console.log("AI Input:", input);
+    // Example: editorRef.current?.insertText(input);
+  };
+
   return (
     <MemoEditorContext.Provider
       value={{
@@ -477,6 +494,9 @@ const MemoEditor = (props: Props) => {
                 }
               />
             )}
+            <Button size="sm" variant="plain" onClick={handleAskAiClick}>
+              <BotIcon className="w-5 h-5 mx-auto" />
+            </Button>
           </div>
         </div>
         <Divider className="!mt-2 opacity-40" />
@@ -514,6 +534,7 @@ const MemoEditor = (props: Props) => {
           </div>
         </div>
       </div>
+      <AiModal isOpen={isAiModalOpen} onClose={closeAiModal} onSubmit={handleAiSubmit} />
     </MemoEditorContext.Provider>
   );
 };
