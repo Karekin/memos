@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const AiSettings = () => {
+function AiSettings() {
   const [apiProvider, setApiProvider] = useState("OpenAI");
   const [timeout, setTimeout] = useState(30);
   const [maxTokens, setMaxTokens] = useState(0);
@@ -61,6 +61,6 @@ const AiSettings = () => {
       </div>
     </div>
   );
-};
+}
 
 export default AiSettings; 

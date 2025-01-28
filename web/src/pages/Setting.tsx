@@ -1,5 +1,5 @@
 import { Option, Select } from "@mui/joy";
-import { CogIcon, DatabaseIcon, KeyIcon, LibraryIcon, LucideIcon, Settings2Icon, UserIcon, UsersIcon } from "lucide-react";
+import { CogIcon, DatabaseIcon, KeyIcon, LibraryIcon, LucideIcon, Settings2Icon, UserIcon, UsersIcon, BotIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import MobileHeader from "@/components/MobileHeader";
@@ -19,17 +19,18 @@ import { WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { useTranslate } from "@/utils/i18n";
 import AiSettings from "@/components/Settings/AiSettings";
 
-type SettingSection = "my-account" | "preference" | "member" | "system" | "memo-related" | "storage" | "sso";
+type SettingSection = "my-account" | "preference" | "member" | "system" | "memo-related" | "storage" | "sso" | "ai-settings";
 
 interface State {
   selectedSection: SettingSection;
 }
 
-const BASIC_SECTIONS: SettingSection[] = ["my-account", "preference"];
+const BASIC_SECTIONS: SettingSection[] = ["my-account", "preference", "ai-settings"];
 const ADMIN_SECTIONS: SettingSection[] = ["member", "system", "memo-related", "storage", "sso"];
 const SECTION_ICON_MAP: Record<SettingSection, LucideIcon> = {
   "my-account": UserIcon,
   preference: CogIcon,
+  "ai-settings": BotIcon,
   member: UsersIcon,
   system: Settings2Icon,
   "memo-related": LibraryIcon,
@@ -136,6 +137,8 @@ const Setting = () => {
               <MyAccountSection />
             ) : state.selectedSection === "preference" ? (
               <PreferencesSection />
+            ) : state.selectedSection === "ai-settings" ? (
+              <AiSettings />
             ) : state.selectedSection === "member" ? (
               <MemberSection />
             ) : state.selectedSection === "system" ? (
@@ -147,7 +150,6 @@ const Setting = () => {
             ) : state.selectedSection === "sso" ? (
               <SSOSection />
             ) : null}
-            <AiSettings />
           </div>
         </div>
       </div>

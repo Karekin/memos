@@ -8,6 +8,7 @@ import useNavigateTo from "./hooks/useNavigateTo";
 import { useCommonContext } from "./layouts/CommonContextProvider";
 import { useUserStore, useWorkspaceSettingStore } from "./store/v1";
 import { WorkspaceGeneralSetting, WorkspaceSettingKey } from "./types/proto/store/workspace_setting";
+import AiSettings from './components/Settings/AiSettings';
 
 const App = () => {
   const { i18n } = useTranslation();
@@ -116,7 +117,9 @@ const App = () => {
     commonContext.setAppearance(userSetting.appearance);
   }, [userSetting?.locale, userSetting?.appearance]);
 
-  return <Outlet />;
+  return (
+    <Outlet />
+  );
 };
 
 export default App;
