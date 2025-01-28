@@ -96,7 +96,7 @@ const Setting = () => {
               {BASIC_SECTIONS.map((item) => (
                 <SectionMenuItem
                   key={item}
-                  text={t(`setting.${item}`, { defaultValue: t(`setting.ai-section.title`) })}
+                  text={t(`setting.${item}`)}
                   icon={SECTION_ICON_MAP[item]}
                   isSelected={state.selectedSection === item}
                   onClick={() => handleSectionSelectorItemClick(item)}
@@ -110,7 +110,7 @@ const Setting = () => {
                   {ADMIN_SECTIONS.map((item) => (
                     <SectionMenuItem
                       key={item}
-                      text={t(`setting.${item}`, { defaultValue: t(`setting.ai-section.title`) })}
+                      text={t(`setting.${item}`)}
                       icon={SECTION_ICON_MAP[item]}
                       isSelected={state.selectedSection === item}
                       onClick={() => handleSectionSelectorItemClick(item)}
@@ -128,7 +128,7 @@ const Setting = () => {
               <Select value={state.selectedSection} onChange={(_, value) => handleSectionSelectorItemClick(value as SettingSection)}>
                 {settingsSectionList.map((settingSection) => (
                   <Option key={settingSection} value={settingSection}>
-                    {t(`setting.${settingSection}`, { defaultValue: t(`setting.ai-section.title`) })}
+                    {t(`setting.${settingSection}`)}
                   </Option>
                 ))}
               </Select>
