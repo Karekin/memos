@@ -291,15 +291,7 @@
       "warning-text": "Are you sure to delete storage service \"{{name}}\"? THIS ACTION IS IRREVERSIBLE"
     },
     "ai": "AI",
-    "ai-section": {
-      "title": "AI Settings",
-      "api-provider": "API Provider",
-      "timeout": "Timeout",
-      "max-token": "Max Token",
-      "temperature": "Temperature",
-      "max-context": "Max Context",
-      "model": "Model"
-    },
+    "ai-settings": "AI Settings",
     "system": "System",
     "system-section": {
       "additional-script": "Additional script",
