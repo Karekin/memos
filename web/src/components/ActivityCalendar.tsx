@@ -30,7 +30,7 @@ const getCellAdditionalStyles = (count: number, maxCount: number) => {
   }
 };
 
-const ActivityCalendar = (props: Props) => {
+export const ActivityCalendar: React.FC<Props> = (props) => {
   const t = useTranslate();
   const { month: monthStr, data, onClick } = props;
   const workspaceSettingStore = useWorkspaceSettingStore();
@@ -66,45 +66,47 @@ const ActivityCalendar = (props: Props) => {
   }
 
   return (
-    <div className={clsx("w-full h-auto shrink-0 grid grid-cols-7 grid-flow-row gap-1")}>
-      {weekDays.map((day, index) => (
-        <div key={index} className={clsx("w-6 h-5 text-xs flex justify-center items-center cursor-default opacity-60")}>
-          {day}
-        </div>
-      ))}
-      {days.map((item, index) => {
-        const date = dayjs(`${year}-${month + 1}-${item.day}`).format("YYYY-MM-DD");
-        const count = item.isCurrentMonth ? data[date] || 0 : 0;
-        const isToday = dayjs().format("YYYY-MM-DD") === date;
-        const tooltipText =
-          count === 0
-            ? t("memo.no-memos")
-            : t("memo.count-memos-in-date", {
-                count: count,
-                memos: count === 1 ? t("common.memo") : t("common.memos"),
-                date: date,
-              }).toLowerCase();
-        const isSelected = dayjs(props.selectedDate).format("YYYY-MM-DD") === date;
+    <div className="flex flex-col w-full">
+      <div className={clsx("w-full h-auto shrink-0 grid grid-cols-7 grid-flow-row gap-1")}>
+        {weekDays.map((day, index) => (
+          <div key={index} className={clsx("w-6 h-5 text-xs flex justify-center items-center cursor-default opacity-60")}>
+            {day}
+          </div>
+        ))}
+        {days.map((item, index) => {
+          const date = dayjs(`${year}-${month + 1}-${item.day}`).format("YYYY-MM-DD");
+          const count = item.isCurrentMonth ? data[date] || 0 : 0;
+          const isToday = dayjs().format("YYYY-MM-DD") === date;
+          const tooltipText =
+            count === 0
+              ? t("memo.no-memos")
+              : t("memo.count-memos-in-date", {
+                  count: count,
+                  memos: count === 1 ? t("common.memo") : t("common.memos"),
+                  date: date,
+                }).toLowerCase();
+          const isSelected = dayjs(props.selectedDate).format("YYYY-MM-DD") === date;
 
-        return (
-          <Tooltip className="shrink-0" key={`${date}-${index}`} title={tooltipText} placement="top" arrow>
-            <div
-              className={cn(
-                "w-6 h-6 text-xs rounded-lg flex justify-center items-center border cursor-default",
-                "text-gray-400",
-                item.isCurrentMonth ? getCellAdditionalStyles(count, maxCount) : "opacity-60",
-                item.isCurrentMonth && isToday && "border-zinc-400",
-                item.isCurrentMonth && isSelected && "font-bold border-zinc-400",
-                item.isCurrentMonth && !isToday && !isSelected && "border-transparent",
-                !item.isCurrentMonth && "border-transparent",
-              )}
-              onClick={() => count && onClick && onClick(date)}
-            >
-              {item.day}
-            </div>
-          </Tooltip>
-        );
-      })}
+          return (
+            <Tooltip className="shrink-0" key={`${date}-${index}`} title={tooltipText} placement="top" arrow>
+              <div
+                className={cn(
+                  "w-6 h-6 text-xs rounded-lg flex justify-center items-center border cursor-default",
+                  "text-gray-400",
+                  item.isCurrentMonth ? getCellAdditionalStyles(count, maxCount) : "opacity-60",
+                  item.isCurrentMonth && isToday && "border-zinc-400",
+                  item.isCurrentMonth && isSelected && "font-bold border-zinc-400",
+                  item.isCurrentMonth && !isToday && !isSelected && "border-transparent",
+                  !item.isCurrentMonth && "border-transparent",
+                )}
+                onClick={() => count && onClick && onClick(date)}
+              >
+                {item.day}
+              </div>
+            </Tooltip>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -12,6 +12,7 @@ import useResponsiveWidth from "@/hooks/useResponsiveWidth";
 import { useMemoFilterStore } from "@/store/v1";
 import { State } from "@/types/proto/api/v1/common";
 import { Memo } from "@/types/proto/api/v1/memo_service";
+import { AIChatBox } from "@/components/AIChatBox";
 
 const Home = () => {
   const { md } = useResponsiveWidth();
@@ -87,6 +88,7 @@ const Home = () => {
           </div>
         )}
       </div>
+      <AIChatBox />
     </section>
   );
 };

@@ -1,12 +1,16 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"math"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,6 +39,15 @@ type Server struct {
 
 	echoServer *echo.Echo
 	grpcServer *grpc.Server
+}
+
+type AIRequest struct {
+	Question string `json:"question"`
+}
+
+type AIResponse struct {
+	Answer string `json:"answer"`
+	Error  string `json:"error,omitempty"`
 }
 
 func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store) (*Server, error) {
@@ -89,6 +102,8 @@ func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store
 	if err := apiV1Service.RegisterGateway(ctx, echoServer); err != nil {
 		return nil, errors.Wrap(err, "failed to register gRPC gateway")
 	}
+
+	s.setupRoutes()
 
 	return s, nil
 }
@@ -175,4 +190,141 @@ func (s *Server) getOrUpsertWorkspaceBasicSetting(ctx context.Context) (*storepb
 		workspaceBasicSetting = workspaceSetting.GetBasicSetting()
 	}
 	return workspaceBasicSetting, nil
+}
+
+func (s *Server) setupRoutes() {
+	// 添加 CORS 中间件
+	s.echoServer.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3001"}, // 替换为你的前端地址
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowCredentials: true,
+	}))
+
+	// 添加测试端点
+	s.echoServer.POST("/api/ai/test", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "Test endpoint working",
+		})
+	})
+
+	s.echoServer.POST("/api/ai/chat", s.handleAIChat)
+}
+
+func (s *Server) handleAIChat(c echo.Context) error {
+	// 添加请求日志
+	slog.Info("Received AI chat request")
+
+	var req AIRequest
+	if err := c.Bind(&req); err != nil {
+		slog.Error("Failed to bind request", "error", err)
+		return c.JSON(http.StatusBadRequest, AIResponse{
+			Error: "无效的请求格式: " + err.Error(),
+		})
+	}
+
+	// 记录请求内容
+	slog.Info("Processing question", "question", req.Question)
+
+	apiKey := os.Getenv("DEEPSEEK_API_KEY")
+	if apiKey == "" {
+		slog.Error("DEEPSEEK_API_KEY not configured")
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "未配置 DEEPSEEK_API_KEY 环境变量",
+		})
+	}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second, // 添加超时设置
+	}
+
+	requestBody := map[string]interface{}{
+		"messages": []map[string]string{
+			{
+				"role":    "user",
+				"content": req.Question,
+			},
+		},
+		"model": "deepseek-chat",
+	}
+
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		slog.Error("Failed to marshal request body", "error", err)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "请求准备失败: " + err.Error(),
+		})
+	}
+
+	// 记录发送到 DeepSeek 的请求
+	slog.Info("Sending request to DeepSeek API")
+
+	request, err := http.NewRequest("POST", "https://api.deepseek.com/v1/chat/completions", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		slog.Error("Failed to create request", "error", err)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "创建请求失败: " + err.Error(),
+		})
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+apiKey)
+
+	response, err := client.Do(request)
+	if err != nil {
+		slog.Error("Failed to send request to DeepSeek", "error", err)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "API 请求失败: " + err.Error(),
+		})
+	}
+	defer response.Body.Close()
+
+	// 读取并记录原始响应
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		slog.Error("Failed to read response body", "error", err)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "读取响应失败: " + err.Error(),
+		})
+	}
+
+	// 记录 DeepSeek 的响应
+	slog.Info("Received response from DeepSeek", "status", response.StatusCode, "body", string(bodyBytes))
+
+	if response.StatusCode != http.StatusOK {
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: fmt.Sprintf("DeepSeek API 返回错误状态码: %d, 响应: %s", response.StatusCode, string(bodyBytes)),
+		})
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		slog.Error("Failed to parse response JSON", "error", err)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "解析响应失败: " + err.Error(),
+		})
+	}
+
+	answer := ""
+	if choices, ok := result["choices"].([]interface{}); ok && len(choices) > 0 {
+		if choice, ok := choices[0].(map[string]interface{}); ok {
+			if message, ok := choice["message"].(map[string]interface{}); ok {
+				if content, ok := message["content"].(string); ok {
+					answer = content
+				}
+			}
+		}
+	}
+
+	if answer == "" {
+		slog.Error("No valid answer in response", "response", result)
+		return c.JSON(http.StatusInternalServerError, AIResponse{
+			Error: "未能从响应中获取有效答案",
+		})
+	}
+
+	slog.Info("Successfully processed AI chat request", "answer_length", len(answer))
+	return c.JSON(http.StatusOK, AIResponse{
+		Answer: answer,
+	})
 }

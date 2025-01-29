@@ -21,9 +21,10 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 3001,
     proxy: {
-      "^/api": {
-        target: devProxyServer,
-        xfwd: true,
+      "/api": {
+        target: "http://localhost:8081",
+        changeOrigin: true,
+        secure: false,
       },
       "^/memos.api.v1": {
         target: devProxyServer,
