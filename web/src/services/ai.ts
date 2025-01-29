@@ -1,4 +1,5 @@
 import { request } from "../utils/request";
+import { useAISettingsStore } from "@/store/v1/aiSettings";
 
 export interface AskAIRequest {
   content: string;
@@ -10,12 +11,14 @@ export interface AskAIResponse {
 }
 
 export const askAI = async (params: AskAIRequest): Promise<AskAIResponse> => {
+  const settings = useAISettingsStore.getState().settings;
+  
   return request({
     url: "/api/ai/chat",
     method: "POST",
     data: {
       question: params.content,
-      model: params.model
+      settings: settings
     },
   });
 }; 

@@ -10,7 +10,7 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"os"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,7 +42,21 @@ type Server struct {
 }
 
 type AIRequest struct {
-	Question string `json:"question"`
+	Question string     `json:"question"`
+	Settings AISettings `json:"settings"`
+}
+
+type AISettings struct {
+	APIProvider string  `json:"apiProvider"`
+	Timeout     int     `json:"timeout"`
+	MaxTokens   int     `json:"maxTokens"`
+	Temperature float64 `json:"temperature"`
+	MaxContext  int     `json:"maxContext"`
+	Model       string  `json:"model"`
+	APIKey      string  `json:"apiKey"`
+	Proxy       string  `json:"proxy"`
+	APIBaseURL  string  `json:"apiBaseUrl"`
+	UserAgent   string  `json:"userAgent"`
 }
 
 type AIResponse struct {
@@ -212,30 +226,26 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) handleAIChat(c echo.Context) error {
-	// 添加请求日志
-	slog.Info("Received AI chat request")
-
 	var req AIRequest
 	if err := c.Bind(&req); err != nil {
-		slog.Error("Failed to bind request", "error", err)
 		return c.JSON(http.StatusBadRequest, AIResponse{
 			Error: "无效的请求格式: " + err.Error(),
 		})
 	}
 
-	// 记录请求内容
-	slog.Info("Processing question", "question", req.Question)
-
-	apiKey := os.Getenv("DEEPSEEK_API_KEY")
-	if apiKey == "" {
-		slog.Error("DEEPSEEK_API_KEY not configured")
-		return c.JSON(http.StatusInternalServerError, AIResponse{
-			Error: "未配置 DEEPSEEK_API_KEY 环境变量",
-		})
-	}
+	settings := req.Settings
 
 	client := &http.Client{
-		Timeout: 60 * time.Second, // 将超时时间从 30 秒增加到 60 秒
+		Timeout: time.Duration(settings.Timeout) * time.Second,
+	}
+
+	if settings.Proxy != "" {
+		proxyURL, err := url.Parse(settings.Proxy)
+		if err == nil {
+			client.Transport = &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+		}
 	}
 
 	requestBody := map[string]interface{}{
@@ -245,30 +255,29 @@ func (s *Server) handleAIChat(c echo.Context) error {
 				"content": req.Question,
 			},
 		},
-		"model": "deepseek-chat",
+		"model":       settings.Model,
+		"max_tokens":  settings.MaxTokens,
+		"temperature": settings.Temperature,
 	}
 
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
-		slog.Error("Failed to marshal request body", "error", err)
 		return c.JSON(http.StatusInternalServerError, AIResponse{
 			Error: "请求准备失败: " + err.Error(),
 		})
 	}
 
-	// 记录发送到 DeepSeek 的请求
-	slog.Info("Sending request to DeepSeek API")
-
-	request, err := http.NewRequest("POST", "https://api.deepseek.com/v1/chat/completions", bytes.NewBuffer(jsonBody))
+	apiURL := settings.APIBaseURL + "chat/completions"
+	request, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		slog.Error("Failed to create request", "error", err)
 		return c.JSON(http.StatusInternalServerError, AIResponse{
 			Error: "创建请求失败: " + err.Error(),
 		})
 	}
 
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+apiKey)
+	request.Header.Set("Authorization", "Bearer "+settings.APIKey)
+	request.Header.Set("User-Agent", settings.UserAgent)
 
 	response, err := client.Do(request)
 	if err != nil {

@@ -1,16 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
+import { useAISettingsStore } from "@/store/v1/aiSettings";
 
 function AiSettings() {
-  const [apiProvider, setApiProvider] = useState("OpenAI");
-  const [timeout, setTimeout] = useState(30);
-  const [maxTokens, setMaxTokens] = useState(0);
-  const [temperature, setTemperature] = useState(1.3);
-  const [maxContext, setMaxContext] = useState(7);
-  const [model, setModel] = useState("deepseek-chat");
-  const [apiKey, setApiKey] = useState("");
-  const [proxy, setProxy] = useState("");
-  const [apiBaseUrl, setApiBaseUrl] = useState("https://api.deepseek.com/v1/");
-  const [userAgent, setUserAgent] = useState("SiYuan/3.1.20 std/darwin");
+  const { settings, updateSettings } = useAISettingsStore();
+
+  const handleChange = (key: string, value: string | number) => {
+    updateSettings({ [key]: value });
+  };
 
   return (
     <div className="p-6 bg-white dark:bg-zinc-800 rounded-lg shadow-md">
@@ -18,45 +14,50 @@ function AiSettings() {
       <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">API Provider</label>
-          <select className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={apiProvider} onChange={(e) => setApiProvider(e.target.value)}>
+          <select 
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md" 
+            value={settings.apiProvider} 
+            onChange={(e) => handleChange('apiProvider', e.target.value)}
+          >
             <option value="OpenAI">OpenAI</option>
+            <option value="DeepSeek">DeepSeek</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Timeout</label>
-          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={timeout} onChange={(e) => setTimeout(Number(e.target.value))} />
+          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.timeout} onChange={(e) => handleChange('timeout', Number(e.target.value))} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Max Token</label>
-          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={maxTokens} onChange={(e) => setMaxTokens(Number(e.target.value))} />
+          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.maxTokens} onChange={(e) => handleChange('maxTokens', Number(e.target.value))} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Temperature</label>
-          <input type="number" step="0.1" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
+          <input type="number" step="0.1" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.temperature} onChange={(e) => handleChange('temperature', Number(e.target.value))} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Max Context</label>
-          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={maxContext} onChange={(e) => setMaxContext(Number(e.target.value))} />
+          <input type="number" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.maxContext} onChange={(e) => handleChange('maxContext', Number(e.target.value))} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Model</label>
-          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={model} onChange={(e) => setModel(e.target.value)} />
+          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.model} onChange={(e) => handleChange('model', e.target.value)} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">API Key</label>
-          <input type="password" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+          <input type="password" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.apiKey} onChange={(e) => handleChange('apiKey', e.target.value)} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Proxy</label>
-          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={proxy} onChange={(e) => setProxy(e.target.value)} />
+          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.proxy} onChange={(e) => handleChange('proxy', e.target.value)} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">API Base URL</label>
-          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={apiBaseUrl} onChange={(e) => setApiBaseUrl(e.target.value)} />
+          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.apiBaseUrl} onChange={(e) => handleChange('apiBaseUrl', e.target.value)} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">User-Agent</label>
-          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={userAgent} onChange={(e) => setUserAgent(e.target.value)} />
+          <input type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" value={settings.userAgent} onChange={(e) => handleChange('userAgent', e.target.value)} />
         </div>
       </div>
     </div>
