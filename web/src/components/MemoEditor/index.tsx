@@ -34,7 +34,8 @@ import ResourceListView from "./ResourceListView";
 import { handleEditorKeydownWithMarkdownShortcuts, hyperlinkHighlightedText } from "./handlers";
 import { MemoEditorContext } from "./types";
 import { BotIcon } from "lucide-react";
-import AiModal from "./AiModal"; // Import the AiModal component
+import AiModal from "./AiModal";
+import { askAI } from "@/services/ai";
 
 export interface Props {
   className?: string;
@@ -92,7 +93,7 @@ const MemoEditor = (props: Props) => {
   const workspaceMemoRelatedSetting =
     workspaceSettingStore.getWorkspaceSettingByKey(WorkspaceSettingKey.MEMO_RELATED)?.memoRelatedSetting ||
     WorkspaceMemoRelatedSetting.fromPartial({});
-  const [isAiModalOpen, setAiModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   useEffect(() => {
     editorRef.current?.setContent(contentCache || "");
@@ -417,17 +418,29 @@ const MemoEditor = (props: Props) => {
   const allowSave = (hasContent || state.resourceList.length > 0) && !state.isUploadingResource && !state.isRequesting;
 
   const handleAskAiClick = () => {
-    // Logic to open a modal or prompt for AI interaction
-    openAiModal();
+    setIsAiModalOpen(true);
   };
 
-  const openAiModal = () => setAiModalOpen(true);
-  const closeAiModal = () => setAiModalOpen(false);
-
-  const handleAiSubmit = (input: string) => {
-    // Logic to process AI input and update the editor content
-    console.log("AI Input:", input);
-    // Example: editorRef.current?.insertText(input);
+  const handleAiSubmit = async (input: string) => {
+    try {
+      const response = await askAI({
+        content: input,
+        model: "deepseek"
+      });
+      
+      // Insert AI response into editor
+      if (editorRef.current) {
+        const cursorPosition = editorRef.current.getCursorPosition();
+        const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
+        if (prevValue !== "" && !prevValue.endsWith("\n")) {
+          editorRef.current.insertText("\n");
+        }
+        editorRef.current.insertText(response.answer);
+      }
+    } catch (error) {
+      console.error("Failed to get AI response:", error);
+      toast.error("Failed to get AI response");
+    }
   };
 
   return (
@@ -534,7 +547,11 @@ const MemoEditor = (props: Props) => {
           </div>
         </div>
       </div>
-      <AiModal isOpen={isAiModalOpen} onClose={closeAiModal} onSubmit={handleAiSubmit} />
+      <AiModal 
+        isOpen={isAiModalOpen} 
+        onClose={() => setIsAiModalOpen(false)}
+        onSubmit={handleAiSubmit}
+      />
     </MemoEditorContext.Provider>
   );
 };

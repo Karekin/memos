@@ -235,7 +235,7 @@ func (s *Server) handleAIChat(c echo.Context) error {
 	}
 
 	client := &http.Client{
-		Timeout: 30 * time.Second, // 添加超时设置
+		Timeout: 60 * time.Second, // 将超时时间从 30 秒增加到 60 秒
 	}
 
 	requestBody := map[string]interface{}{

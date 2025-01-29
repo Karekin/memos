@@ -11,8 +11,11 @@ export interface AskAIResponse {
 
 export const askAI = async (params: AskAIRequest): Promise<AskAIResponse> => {
   return request({
-    url: "/api/v1/ai/ask",
+    url: "/api/ai/chat",
     method: "POST",
-    data: params,
+    data: {
+      question: params.content,
+      model: params.model
+    },
   });
 }; 
